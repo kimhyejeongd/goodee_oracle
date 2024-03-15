@@ -241,8 +241,419 @@ WHERE EMAIL LIKE '%yo%';
 SELECT *
 FROM EMPLOYEE
 WHERE EMAIL LIKE '%j%' AND EMP_NAME LIKE '유%';
+
 -- 사원중 유씨성이 아닌 사원들 조회하기
 SELECT *
 FROM EMPLOYEE
-WHERE EMP_NAME NOT LIKE'유%;
---
+WHERE EMP_NAME NOT LIKE '유%';
+
+-- 이메일 주소에 _앞글자가3글자인 사원을 조회하기
+-- 사원명, 이메일
+SELECT EMP_NAME,EMAIL
+FROM EMPLOYEE
+WHERE EMAIL LIKE '___\_%' ESCAPE'\';
+--이스케이프 문자열 처리하기  \처리
+
+-- 문자열을 결합시켜주는 연산자
+-- || : 문자열 결합연산자
+SELECT '여러분 오늘'||'금요일이에요! 아이유'
+FROM DUAL;
+SELECT EMP_NAME||'님 급여'||SALARY||'보너스'||BONUS MSG
+FROM EMPLOYEE;
+
+-- NULL값 조회하기
+-- NULL 아무의미 없는 값, 빈값을 표시할 때 사용할 수 있음
+-- 연산불가능함.->산술 , 비교연산
+-- NULL을 찾을 수 있는 연산자를 제공
+-- IS  NULL/IS NOT NULL
+-- 보너스를 받지않는 사원 조회하기
+SELECT EMP_NAME,BONUS
+FROM EMPLOYEE
+WHERE BONUS IS NULL;
+
+-- 보너스를 받는 사원 사원명, 급여, 보너스 조회하기
+SELECT EMP_NAME, SALARY, BONUS
+FROM EMPLOYEE
+WHERE BONUS IS NOT NULL;
+
+-- 부서가 지정되지 않은 사원 조회하기 사원명, 부서코드
+SELECT EMP_NAME, NBL(DEPT_CODE '인턴')AS DEPTCODE
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NULL;
+
+-- 다중값에 대한 동등비교 연산자
+-- OR 연결되는 조건을 간단하게 처리할 수 있다.
+-- IN / NOT IN
+-- 컬럼명 IN/ NOT IN(값,값,값...);
+-- 사원중 부서코드가 D5,D6,D8인 사원을 조회하기 이름,부서코드
+SELECT EMP_NAME,DEPT_CODE
+FROM EMPLOYEE
+WHERE DEPT_CODE IN('D5','D6','D8');
+
+-- 나중에~~~ 서브쿼리문(다중행)과 동등비교할 때 사용
+SELECT EMP_NAME,DEPT_CODE
+FROM EMPLOYEE
+WHERE DEPT_CODE IN(SELECT DEPT_ID FROM DEPARTMENT WHERE DEPT_TITLE='총무부' OR DEPT_TITLE LIKE'해외%');
+
+-- 논리연산자 우선순위
+-- 직책이 J7이거나 J2인 사원 중 월급이 280만원 이상인 사원 조회하기
+-- 사원명, 직책코드, 급여
+SELECT EMP_NAME,JOB_CODE,SALARY
+FROM EMPLOYEE
+WHERE JOB_CODE IN('J7','J2') AND SALARY>=2800000;
+
+-- 오라클에서 제공하는 함수에 대해 알아보자
+-- 단일행 함수 : 테이블의 모든 행에 대한 결과를 반환하는 함수 
+-- 자료형(문자,숫자,날짜)에 따라 제공하는 함수들이 있음, 선택함수(조건에 따라 내용을 출력)
+-- 그룹 함수 : 테이블에(그룹별) 한개의 결과를 반환하는 함수 -> 데이터 내용을 집계할 때 사용
+-- 합계,평균,최대,최소,갯수
+
+-- 단일행 함수 활용하기
+-- 사용위치
+-- SELECT문의 컬럼위치
+-- WHERE 절 조건으로 사용
+-- INSERT,UDPDATE,DELETE사용이 가능
+
+-- 문자열을 처리하는 함수
+
+-- 문자열의 길이는 반환하는 함수 : LENGTH('문자열' 또는 컬럼명) -> 반환형 INT
+SELECT LENGTH('오늘은 금요일')
+FROM DUAL;
+
+SELECT EMP_NAME,LENGTH(EMP_NAME) AS EMP_NAME_LENGTH
+FROM EMPLOYEE;
+
+-- 사원 중 이메일의 길이가 15글자 이상인 사원만 조회하기 이름, 이메일, 이메일길이
+SELECT EMP_NAME,EMAIL,LENGTH(EMAIL) AS EMAIL_LENGTH
+FROM EMPLOYEE
+WHERE LENGTH(EMAIL)>= 15;                                                                                                 
+
+-- 문자열의 바이트수를 출력해주는 함수 : LENTGHB('문자열'/컬럼명)
+-- 한글 대한 BYTE수 한글자당 3BYTE*EXPRESS버전에서만
+SELECT LENGTHB('ABCDE'),LENGTHB('아양오요')
+FROM DUAL;
+
+-- INSTR : JABA INDEXOF메소드와 동일한 기능
+-- INSTR('문자열'/컬럼명, 찾을 문자[,시작위치, 찾을 횟수]
+-- 오라클에서는 번호는 1부터 시작함
+SELECT INSTR('GE아카데미','GD'),INSTR('GD아카데미','아'),INSTR('GD아카데미','BS')
+FROM DUAL;
+
+--사원의 이메일에 J위치 찾기
+SELECT EMAAIL ,INSTR(EMAIL,'j')
+fROM EMPLOYEE
+WHERE INSTR(EMAIL,'j')!=0;
+
+SELECT INSTR('GD 아카데미 GD게임즈 GD음악사 GD7DJ화이팅!'GD'),
+        INSTR('GD 아카데미 GD게임즈 GD음악사 GDJ79 화이팅!'GD',3),
+            INSTR('GD 아카데미 GD게임즈 GD음악사 GDJ79 화이팅!'GD',3,-10),
+            INSTR('GD 아카데미 GD게임즈 GD음악사 GDJ79 화이팅!'GD',1,4)
+            FROM DUAL;
+            
+--LPAD/RPAD : 문자열의 길이가 지정된 길이만큼 저장되지않을 경우 특정값으로 채우는 함수
+-- LPAD/RPAD( 문자열/컬럼명,최대길이,채울문자) 
+--여기서는 한글 한글자에 2바이트임
+SELECT LPAD ('유병승',10,'*'),RPAD('유병승','10','#'),RPAD('유병승',6,'%')
+FROM DUAL;
+
+-- 이메일을 출력할때 16글자가 안되는 이메일은 나머지 자리를*로 표시하기
+SELECT EMAIL,RPAD(EMAIL,16,'*')
+FROM EMPLOYEE;
+
+-- LTRIM / RTRIM : 공백, 지정문자를 제거해주는 함수
+-- LTRIM / RTRIM(문자열/컬럼명/특정문자)
+SELECT '          명준',LTRIM('          명준')
+FROM DUAL;
+--명준앞에 공백이 다 날아가서 출력됨
+
+SELECT '2222222222동훈',LTRIM('2222222222동훈','2')
+FROM DUAL;
+-- 왼쪽 2가 다 지워지고 출력된다. 
+
+-- TRIM : 양쪽에 있는 값을 제거하는 함수, 기본 : 공백, 설정하면 설정값을 제거(한개문자만 가능)
+-- 옵션을 설정해서 왼쪽, 오른쪽 양쪽을 설정할 수 있음
+-- TRIM(문자열/컬럼명)
+-- TRIM(LEADING/TRAILING/BOTH 찾을 문자 FROM 문자열/컬럼)
+
+SELECT '        금요일          ',TRIM('        금요일          '), --양옆 공백없는 값이 출력된다. 
+        'VVVVVVVVVV태권VVVVVVVVVV',
+        TRIM(LEADING 'V' FROM 'VVVVVVVVVV태권VVVVVVVVVV'),  -- 왼쪽 V 없이 출력된다.
+        TRIM(TRAILING 'V' FROM 'VVVVVVVVVV태권VVVVVVVVVV'), -- 오른쪽 V 없이 출력된다
+        TRIM(BOTH 'V' FROM 'VVVVVVVVVV태권VVVVVVVVVV') -- 양옆 V없이 출력된다.
+FROM DUAL;
+
+--12345684654325158금요일화이팅3574685435436835453
+SELECT RTRIM(LTRIM('12345684654325158금요일화이팅3574685435436835453','1234567890'),'0123456789' AS OKAY) --오류
+FROM DUAL;
+
+--SUBSTR : 문자열을 잘라내는 기능 -> JAVA SUBSTRING 메소드와 동일
+--SUBSTR : (문자열/컬럼명,시작인덱스[,길이])
+SELECT SUBSTR('금요일은 너무너무 행복해 주말에 공부할 시간이 많잖아 우하하',6,8), --6번에서부터 8칸만 출력됨 너무너무 행복해 출력
+       SUBSTR('금요일은 너무너무 행복해 주말에 공부할 시간이 많잖아 우하하',INSTR('금요일은 너무너무 행복해 주말에 공부할 시간이 많잖아 우하하','행'),3) --행복해 출력
+FROM DUAL;
+
+SELECT SUBSTR('금요일은 너무너무 행복해 주말에 공부할 시간이 많잖아 우하하',-3) -- 뒤에서부터 3개 만 출력됨 우하하 출력
+FROM DUAL;
+
+-- 사원의 이메일에서 아이디만 출력하기
+SELECT EMAIL,SUBSTR(EMAIL,1,INSTR(EMAIL,'@')-1)
+FROM EMPLOYEE;
+
+-- 이메일의 아이디가 7글자이상인 사원을 조회하기
+-- 사원명, 이메일 출력
+SELECT EMP_NAME,EMAIL
+FROM EMPLOYEE
+WHERE LENGTH(SUBSTR(EMAIL,1,INSTR(EMAIL,'@')-1))>=7;
+
+-- 사원 중 여사원만 출력하기
+SELECT *
+FROM EMPLOYEE
+WHERE SUBSTR(EMP_NO,8,1)='2';
+
+-- UPPER/LOWER : 영문자를 대문자 소문자로 변경하는 기능
+-- INITCAP : 띄어쓰기에 영문자 첫글자를 대문자로 변경해주는 기능
+SELECT 'Welcome to oRACLE world',
+        UPPER('Welcome to oRACLE world'),
+        LOWER('Welcome to oRACLE world'),
+        INITCAP('Welcome to oRACLE world') --단어 첫글자만 대문자로 바꿔서 출력됨
+FROM DUAL; 
+
+SELECT UPPER(EMAIL),LOWER(EMAIL)
+FROM EMPLOYEE;
+
+-- CONCAT : 문자열을 결합해주는 기능
+-- ||연산자와 동일한 기능
+SELECT '곧'||'점심' ,CONCAT('곧','점심') --곧점심
+FROM DUAL;
+
+-- REPLACE : 문자열을 변경해주는 함수
+-- REPLACE(문자열/컬럼명,찾을문자,교체문자)
+SELECT '코딩은 너무 어려워',REPLACE('코딩은 너무 어려워','어려워','쉬워') --코딩은 너무 어려워 / 코딩은 너무 쉬워 
+FROM DUAL;
+-- EMAIL 주소가 BS -> GD로 변경됨 GD로 변경해서 출력하기
+-- 사원명, 이메일 부서코드
+SELECT EMP_NAME,REPLACE(EMAIL,'BS','GD'),DEPT_CODE
+FROM EMPLOYEE;
+
+-- REVERSE 문자열을 거꾸로 만들어주는 기능
+SELECT EMAIL,REVERSE(EMAIL),REVERSE(EMAIL),REVERSE(REVERSE('배고프다 밥줘'))
+FROM EMPLOYEE;
+
+-- 숫자처리함수
+-- ABS : 절대값 부호없는값
+SELECT ABS(10),ABS(-10) -- 둘다 10 출력됨
+FROM DUAL;
+
+-- MOD : 나머지를 계산하는 기능 JAVA%연산자와 동일
+SELECT MOD(3,2) --1
+FROM DUAL;
+
+SELECT SALARY,MOD(SALARY,3)
+FROM EMPLOYEE;
+
+-- 소수점처리함수
+-- ROUND : 소수점을 반올림하는 기능
+-- ROUND(숫자/컬럼명[,자리수]) 컬럼명은 반드시 숫자여야함
+SELECT 125.567,ROUND(125.567),--126
+       ROUND(125.567,2) --125.57
+FROM DUAL;
+
+-- FLLOR : 소수점을 버림
+SELECT 125.567,FLOOR(125.567) --125
+FROM DUAL;
+
+-- TRUNC : 소수점버림, 자리수를 지정할 수 있음
+SELECT 125.567,TRUNC(125.567,2) --125.56
+FROM DUAL;
+
+-- CEIL : 소수점 무조건 올림
+SELECT 125.567,CEIL(125.167) --126
+FROM DUAL;
+
+-- 오라클에서 랜덤숫자 출력하기
+-- DBMS_RANDOM,VALUE()함수를 이용 
+SELECT DBMS_RANDOM.VALUE(),FLOOR(DBMS_RANDOM.VALUE()*10), -- 0~1 실수가 랜덤으로 출력됨/정수로 랜덤값 출력
+        FLOOR(DBMS_RANDOM.VALUE(1,11)) --1에서11까지의 랜덤값 출력됨
+FROM DUAL;
+
+-- 문자 랜덤으로 출력하기
+-- DBMS_RANDOM.STRING()
+SELECT DBMS_RANDOM.STRING('X',5), --5글자의 숫자와 영문자가 랜덤으로 출력됨
+        DBMS_RANDOM.STRING('P',5), -- 5글자의 특수기호를 포함한 영문자와 숫자가 출력됨
+        DBMS_RANDOM.STRING('U',5) -- 5글자의 대문자가 랜덤으로 출력됨
+        DBMS_RANDOM.STRING('L',5) -- 5글자의 소문자가 랜덤으로 출력됨
+FROM DUAL;
+
+-- 날짜처리함수
+-- 오라클에서 기본날짜 출력하는 방법
+-- SYSDATE ->  시스템상의 현재 년, 월, 일을 출력할 때 -> JAVA javs.sql.Date 연결
+-- SYSTIMESTAMP -> 오늘 년, 월, 일, 시, 분, 초 -> JAVA java.sql.Timestamp 연결
+
+SELECT SYSDATE,SYSTIMESTAMP
+FROM DUAL; 
+
+-- 날짜값에 대한 산술연산처리
+-- +,- 연산 -> 날짜의 일수가 증가, 차감
+SELECT SYSDATE,SYSDATE+1,SYSDATE-1 -- 현재 날짜 / 현재 날짜에서 하루 증가 / 현재 날짜에서 하루 감소된 날짜 출력
+FROM DUAL;
+
+SELECT EMP_NAME,HIRE_DATE,HIRE_DATE+10
+FROM EMPLOYEE;
+
+-- NEXT_DAY : 매개변수로 전달받은 요일중 가장 가까운 날짜를 출력
+SELECT NEXT_DAY(SYSDATE,'토') --그주의 가장 가까운 요일의 날짜를 출력 오늘 3.15 금이니까 2024.3.16이 출력됨
+FROM DUAL;
+-- 한글을 인식하는 이유 : LOCALE값을 가지고 국적에 맞는 언어를 사용하기 때문에
+SELECT*FROM V$NLS_PARAMETERS; -- 오라클이 기본적으로 가지고있는 정보들에 언어가 KOREAN으로 설정되어있음
+-- 만약 세팅 되어있는 값을 바꾸면 
+ALTER SESSION SET NLS_LANGUAGE='AMERICAN'; -- 바꾸면 '토','토요일' 등의 언어 사용 불가능
+ALTER SESSION SET NLS_LANGUAGE='KOREAN'; -- 다시 KOREA로 변경하기
+
+-- LAST_DAY : 그 달의 마지막 날 출력
+SELECT LAST_DAY(SYSDATE)  --24/03/31
+FROM DUAL;
+
+-- ADD_MONTH : 개월수를 더하는 기능
+SELECT SYSDATE,ADD_MONTHS(SYSDATE,5)  --2024/08/15
+FROM DUAL;
+
+SELECT ADD_MONTHS(HIRE_DATE,5) -- 입사일에서 5달후의 데이터들출력
+FROM EMPLOYEE;
+
+-- MONTHS_BETWEEN : 두 날짜 사이의 개열수를 구해주는 함수
+SELECT FLOOR(MONTHS_BETWEEN(SYSDATE,'93/11/09')),FLOOR(MONTHS_BETWEEN(SYSDATE,'01/08/10'))  --03/11/09 부터 지금까지의 개월수 출력(소수점 제외)/ 01/08/10 부터 지금까지의 개월 수 출력 (소수점 제외)
+FROM DUAL;
+
+-- 사원들의 개월수를 조회하기
+-- 사원명, 부서코드, 입사일, 입사개월
+SELECT EMP_NAME,DEPT_CODE,HIRE_DATE,FLOOR(MONTHS_BETWEEN(SYSDATE,HIRE_DATE)) AS 입사개월
+FROM EMPLOYEE;
+
+-- 오늘부로 명준님이 군대로 끌려갑니다. 군복무기간 1년 6개월이고 그랬을때 명준님의 전역날을 구하고 전역때까지 먹는 짬밥(하루에 3끼)의 수를 구하기.
+SELECT ADD_MONTHS(SYSDATE,18) AS 명준님전역날 ,ADD_MONTHS(SYSDATE,18)-SYSDATE AS 복무일수,(ADD_MONTHS(SYSDATE,18)-SYSDATE)*3 AS 짬밥수
+FROM DUAL;
+
+
+-- EXTRACT : 날짜의 년,월,일을 따로 출력할 수 있는 기능
+-- EXTRACT(YEAR/MONTH/DAY FROM 날짜)
+-- 현재 날짜의 년 월 일 각 컬럼으로 출력하기
+SELECT 
+    EXTRACT(YEAR FROM SYSDATE)AS YEAR, --연도 출력
+    EXTRACT(MONTH FROM SYSDATE)AS MONTH, -- 달 출력
+    EXTRACT(DAY FROM SYSDATE)AS DAY --일 출력
+FROM DUAL;
+
+-- 사원 중 12월에 입사한 사원을 조회하기
+-- 사원명, 입사일
+SELECT EMP_NAME,HIRE_DATE
+FROM EMPLOYEE
+WHERE EXTRACT(MONTH FROM HIRE_DATE)=12; 
+
+SELECT EMP_NAME,HIRE_DATE
+FROM EMPLOYEE
+WHERE EXTRACT(YEAR FROM HIRE_DATE)=2001; -- 2001년도에 입사한 사원의 이름과 입사일 출력
+
+-- 형변환 함수 -> 오라클에는 자동형변환이 잘 작동함. 자동으로 한개의 타입에 맞춰서 연산을 해주는 기능을 갖추고 있음 하지만 필요에 따라 강제형변환을 할 때 사용하는 함수가 존재
+-- 자료형
+-- 문자 : CHAR, VARCHAR2, NVARCHAR2 -> 문자열을 저장
+-- 숫자 : NUMBER -> 정수, 실수를 모두 저장 
+-- 날짜 : DATE, TIMESTAMP
+-- BLOB, CLOB, LONG
+
+-- TO_CHAR : 숫자, 날짜값을 문자형으로 변환해주는 함수
+-- 특정문자열 패턴에 맞춰서 변경해줌
+-- 패턴을 표시하는 기호가 있음
+
+-- 숫자 -> 문자로 변경 패턴
+-- 0 : 변환값의 자리수가 지정한 자리수와 일치하지않을 때 값이 없는 자리에 0을 표시 
+-- 9 : 변환대상값의 자리수가 지정한 자리수와 일치하지않을 때 값이 없는 자리를 생략
+-- L : 화폐단위를 표시(*LOCALE을 기준으로 설정)
+
+-- 정수, 문자열로 변환하기 
+SELECT 1234567,TO_CHAR(1234567,'000,000,000'), --1234567/001,234,567
+                TO_CHAR(1234567,'999,999,999'), --1,234,567
+                TO_CHAR(1234567,'L999,999,999') --\1,234,567
+FROM DUAL;
+-- 소수점에 대한 처리
+SELECT 180.5,TO_CHAR(180.5,'000,000,000'),TO_CHAR(180.5,'000,000,000'),
+    TO_CHAR(180.5,'999,999.000') --000,000,181/000,000,181/180.500
+FROM DUAL;
+
+-- 날짜를 문자열로 변경하기
+-- Y/R 년,M 월,D 일, H 시, MI 분 SS 초
+SELECT SYSDATE,
+    TO_CHAR(SYSDATE,'YYYY.MM.DD'), -- 2024.03.15
+    TO_CHAR(SYSDATE,'YY.MM.DD'), -- 24.03.15
+    TO_CHAR(SYSDATE,'YY"년"MM"월"DD"일"HH24"시"MI"분"SS"초"') -- 24년03월15일15시17분12초 
+FROM DUAL;
+
+-- 사원의 급여를 화폐단위로 표시하여 단위별로 ,로 구분하고 입사일을 -로 구분해서 년월일 출력하기
+-- 사원명 , 급여, 입사일
+SELECT EMP_NAME,TO_CHAR(SALARY,'L999,999,999'),TO_CHAR(HIRE_DATE,'YY-MM-DD')
+FROM EMPLOYEE;
+
+-- 숫자형으로 변경하기
+-- 문자를 숫자로 변경할 수 있다.
+-- 숫자형식의 문자열을 숫자로 변경해서 연산처리할 때 등 사용
+SELECT 1000+1000, 1000+TO_NUMBER('1,000','999,999')-- 2000/2000
+FROM DUAL;
+
+-- 날짜 형변환하기 
+-- 문자를 날짜로 변경
+-- 숫자를 날짜로 변경
+SELECT TO_DATE('240315','YYMMDD'),TO_DATE('24-03-15','YY-MM-DD'), --24/03/15
+    TO_DATE(240213,'YYMMDD'),TO_DATE(TO_CHAR(000614,'000000'),'YYMMDD') -- > 614로 들어오기떄문에 길이가 부족하다고뜨기때문에 CHAR로 바꿔서 출력해야함
+FROM DUAL;
+
+-- NULL 처리 대체함수
+-- NVL(컬럼명,대체값) : 컬럼값이 NULL일 경우 대체값으로 대체해서 출력
+-- NVL2(컬럼명,NULL일아닐 때 출력할값,NULL일 때 출력할 값)
+SELECT EMP_NAME,SALARY,BONUS,DEPT_CODE,
+        NVL(BONUS,0),NVL2(BONUS,'있다','없다'),NVL2(DEPT_CODE,'정규직','인턴')
+FROM EMPLOYEE;
+
+-- 컬럼의 값에 따라 출력하는 내용을 변경하는 함수
+-- 1.DECODE SWITCH같은 스타일
+-- DECODE(컬럼명,'예상값','출력할 값','예상값2',출력값2,...)
+-- 사원의 직책명 출력하기
+SELECT*FROM EMPLOYEE;
+SELECT*FROM JOB;
+SELECT*EMP_NAME,
+    DECODE(JOB_CODE,'J1','대표','J2','부사장','J3','부장','J4','차장','사원') AS JOB_NAME
+FROM EMPLOYEE;
+
+-- 사원의 이름, 급여, 부서코드, 성별(남,여) 출력하기
+SELECT EMP_NAME,SALARY,DEPT_CODE,
+ DECODE(SUBSTR(EMP_NO,8,1),'2','여','1','남','3','남','4','여')AS 성별
+FROM EMPLOYEE;
+
+-- 2.CASE IF~ELSE IF문같은 스타일
+-- CASE
+-- WHEN 조건
+-- THEN 조건이 TRUE일때 출력 할 값
+-- WHEN 조건
+-- THEN 조건이 TRUE일때 출력 할 값
+-- WHEN 조건
+-- THEN 조건이 TRUE일때 출력 할 값
+-- ELSE 기본출력값
+-- END
+
+SELECT EMP_NAME,JOB_CODE,
+    CASE
+        WHEN JOB_CODE='J1' THEN '대표'
+        WHEN JOB_CODE='J2' THEN '부사장'
+        WHEN JOB_CODE='J3' THEN '부장'
+        ELSE '사원'
+        END AS 직책
+FROM EMPLOYEE;
+
+-- 월급을 기준으로 고액, 중간, 그외를 나눠서 출력하기
+-- 400만원 이상이면 고액, 400~300사이면 중간, 그외 ㅠㅠ을 출력하기
+-- 이름 급여 결과
+SELECT EMP_NAME, SALARY,
+    CASE
+        WHEN SALARY>=4000000 THEN '고액'
+        WHEN SALARY>=3000000 THEN '중간'
+        ELSE 'ㅠㅠ'
+    END AS 월급기준레벨
+FROM EMPLOYEE;
