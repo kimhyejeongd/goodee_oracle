@@ -657,3 +657,419 @@ SELECT EMP_NAME, SALARY,
         ELSE 'ㅠㅠ'
     END AS 월급기준레벨
 FROM EMPLOYEE;
+
+-- 사원테이블에서 현재나이를 구하기
+-- 현재년도에서 출생년도를 차감
+SELECT EXTRACT(YEAR FROM SYSDATE) -- 현재년도구하기
+FROM DUAL;
+SELECT EXTRACT(YEAR FROM TO_DATE(SUBSTR(EMP_NO,1,2),'RR')) -- 출생년도 구하기/'YY'는 앞자리가 다 20으로 나옴, 'RR'을 사용해야 19로 출력됨
+FROM EMPLOYEE;
+SELECT EMP_NAME
+        ,EXTRACT(YEAR FROM SYSDATE)-EXTRACT(YEAR FROM TO_DATE(SUBSTR(EMP_NO,1,2),'RR')) AS 현재나이,
+        EXTRACT(YEAR FROM SYSDATE)-(SUBSTR(EMP_NO,1,2)+(CASE
+        WHEN SUBSTR(EMP_NO,8,1) IN('1','2')THEN  1900
+        WHEN SUBSTR(EMP_NO,8,1) IN('3','4')THEN 2000
+     END)) AS 나이
+FROM EMPLOYEE;
+ -- RR로 년도를 출력할때 
+--현재년도       입력년도     계산년도
+--00~49         00~49       현세기
+--00~49         50~99       전세기
+--50~99         00~49       다음세기
+--50~99         50~99       현세기
+
+UPDATE EMPLOYEE SET EMP_NO='320808-212341' WHERE EMP_ID='252';
+
+insert into EMPLOYEE (EMP_ID,EMP_NAME,EMP_NO,EMAIL,PHONE,DEPT_CODE,JOB_CODE,SAL_LEVEL,SALARY,BONUS,MANAGER_ID,HIRE_DATE, ENT_DATE,ENT_YN) 
+values ('252','옛사람','320808-2123341','go_dm@kh.or.kr',null,'D2','J2','S5',4480000,null,null,to_date('94/01/20','RR/MM/DD'),null,'N');
+
+ROLLBACK;
+
+-- 그룹함수
+-- 테이블의 데이터에 집계하는 함수들 -> 결과는 한개만 출력
+-- 컬럼을 선택하는 것에 제한이 있음 
+-- 합계, 평균, 갯수, 최대값, 최소값
+-- SUM() : 테이블의 특정컬럼의 합계값을 출력해주는 함수
+-- AVG() : 테이블의 특정컬럼의 평균값을 출력해주는 함수
+-- COUNT() : 테이블의 ROW(데이터) 수를 출력해주는 함수
+-- MAX() : 테이블의 특정컬럼의 최대값을 출력해주는 함수
+-- MIN() : 테이블의 특정 컬럼의 최소값을 출력해주는 함수 
+
+-- 사원의 급여 합계를 조회하기
+-- 다른컬럼을 추가조회할 수 없다!
+SELECT SUM(SALARY)
+FROM EMPLOYEE;
+-- WHERE 사용하면 FILTER된 ROW만 가지고 계산을 함
+-- 부서가 D5인 사원의 급여 합계를 조회하기
+SELECT SUM(SALARY)
+FROM EMPLOYEE
+WHERE DEPT_CODE='D5'; -- 실행순서 : FROM -> WHERE -> SELECT65
+
+-- 평균 구하기
+SELECT AVG(SALARY)
+FROM EMPLOYEE;
+-- D5부서의 금여 평균조회하기
+SELECT AVG(SALARY)
+FROM EMPLOYEE
+WHERE DEPT_CODE='D5';
+
+-- SELECT문에서 그룹함수 두개 실행하기
+SELECT SUM(SALARY),AVG(SALARY)
+FROM EMPLOYEE
+WHERE DEPT_CODE='D5';
+
+-- NULL값 처리 -> 제외하고 계산됨 -> NVL로 NULL값 0으로 처리해줌(다른 값이 출력됨)
+SELECT AVG(BONUS),AVG(NVL(BONUS,0))
+FROM EMPLOYEE;
+
+-- 테이블의 데이터수를 조회하기
+-- COUNT(컬럼명/*)
+-- 컬럼명 : 그 컬럼값이 NULL인 ROW는 제외하고 갯수를 출력
+-- * : 모든컬럼값이 NULL이면 제외하고 출력* 컬럼에 한개라도 값이 있으면 갯수에 포함
+-- 전체 사원수, 전체 부서수, 직책수 등 구할 수 있음
+SELECT COUNT(*) AS 사원수 ,COUNT(DEPT_CODE) AS DEPT_CODECOUNT
+FROM EMPLOYEE;
+SELECT COUNT(*) AS 부서수
+FROM DEPARTMENT;
+-- 보너스를 받는 사원의 수 
+SELECT COUNT(*) 
+FROM EMPLOYEE
+WHERE BONUS IS NOT NULL;
+SELECT COUNT(BONUS)
+FROM EMPLOYEE;
+
+-- 급여를 400만원 이상받는 사원의 수는 ? 
+SELECT COUNT(*)
+FROM EMPLOYEE
+WHERE SALARY>=4000000;
+-- D6부서의 사원수를 조회하기
+SELECT COUNT(*)
+FROM EMPLOYEE
+WHERE DEPT_CODE='D6';
+-- 부서가 D6,D7,D5인 사원들의 사원수, 급여합계, 급여 평균을 조회하세요
+SELECT COUNT(*),SUM(SALARY),AVG(SALARY)
+FROM EMPLOYEE
+WHERE DEPT_CODE IN('D6','D5','D7');
+
+-- 최대값, 최소값을 조회하기
+-- 최대급여를 조회하기, 최소 급여를 조회하기등에 사용
+SELECT MAX(SALARY),MIN(SALARY)
+FROM EMPLOYEE;
+-- D5 부서의 최고 급여액, 최소 급여액을 조회하기
+SELECT MAX(SALARY),MIN(SALARY)
+FROM EMPLOYEE
+WHERE DEPT_CODE='D5';
+
+-- GROUP BY, HAVTIG 
+-- GROUP BY 절 활용하기
+-- ROW 를 특정컬럼을 기준으로 그룹으로 묶어주는 기능  -> 동일한 컬럼값을 한개 그룹으로 묶어줌
+-- SELECT 컬렴명,컬럼명 ....
+-- FROM 테이블명
+-- [WHERE 조건식]
+-- [GROUP BY 컬럼명[,컬럼명...]}
+-- 부서별 급여합계 조회하기
+SELECT DEPT_CODE,SUM(SALARY)
+FROM EMPLOYEE -- 전체 사원에 대한 합계를 구한것
+GROUP BY DEPT_CODE;
+-- 직책별 평균 급여를 조회하기
+SELECT JOB_CODE,AVG(SALARY)
+FROM EMPLOYEE
+GROUP BY JOB_CODE;
+-- 부서별 평균급여, 합계 , 사원수 조회하기
+SELECT NVL(DEPT_CODE,'인턴'),AVG(SALARY),SUM(SALARY),COUNT(*) 
+FROM EMPLOYEE
+--WHERE DEPT_CODE IS NOT NULL
+GROUP BY DEPT_CODE;
+
+-- GROUP BY절에 다수의 컬럼설정하기
+SELECT JOB_CODE,DEPT_CODE,COUNT(*)
+FROM EMPLOYEE
+GROUP BY JOB_CODE,DEPT_CODE;
+-- WHERE 절에 그룹함수를 사용할 수 없다.
+-- 최대 급여를 받는 사원
+SELECT *
+FROM EMPLOYEE
+-- WHERE SALARY=MAX(SALARY); --> WHERE에는 그룹함수 쓸 수 없음
+-- 부서의 입원수가 3명 이상 부서
+SELECT * 
+FROM EMPLOYEE
+WHERE COUNT(*)>=3; --> 그룹함수 X
+--그룹함수를 조건으로 사용하려면 HAVING 절을 사용해야한다.
+-- SSLELECT 컬럼명, 컬럼명
+-- FROM  테이블명
+-- [WHERE 조건식]
+-- [GROUP BY 컬럼명]
+-- [HAVIG 조건식]
+-- 부서의 인원수가 3명이상인 부서조회하기
+SELECT DEPT_CODE,COUNT(*)
+FROM EMPLOYEE
+GROUP BY DEPT_CODE
+HAVING COUNT(*) >=3;
+-- 부서의 평균급여가 300만원 이상인 부서 조회하기
+SELECT DEPT_CODE,AVG(SALARY)
+FROM EMPLOYEE
+GROUP BY DEPT_CODE
+HAVING AVG(SALARY)>=3000000;
+-- 직책별 인원수가 3명 이상인 직책 조회하기
+SELECT JOB_CODE,COUNT(*)
+FROM EMPLOYEE
+GROUP BY JOB_CODE
+HAVING COUNT(*)>=3;
+-- 매니저가 관리하는 사원이 2명 이상인 매지저 아이디 조회하기
+SELECT MANAGER_ID,COUNT(MANAGER_ID)
+FROM EMPLOYEE
+GROUP BY MANAGER_ID
+HAVING COUNT(MANAGER_ID)>=2;
+-- 남자,여자의 급여 평균,인원수 조회하기
+SELECT DECODE(SUBSTR(EMP_NO,8,1),'1','남','2','여'),AVG(SALARY),COUNT(*)
+FROM EMPLOYEE
+GROUP BY SUBSTR(EMP_NO,8,1);
+
+-- 1900년대 입사한 사원수, 2000년대 입사한 사원수 조회하기
+-- 년도     인원수
+-- 1900     8
+-- 2000     15
+SELECT 
+        DECODE(SUBSTR(TO_CHAR(EXTRACT(YEAR FROM HIRE_DATE)),1,2),'19','1900년대','20','2000년대')
+        AS 년도,COUNT(*) AS 사원수
+FROM EMPLOYEE
+GROUP BY SUBSTR(TO_CHAR(EXTRACT(YEAR FROM HIRE_DATE)),1,2);
+-- 1900년도 2000년도
+--    8       15
+SELECT --  EXTRACT(YEAR FORM HIRE_DATE),
+        COUNT(DECODE(SUBSTR(TO_CHAR(EXTRACT(YEAR FROM HIRE_DATE)),1,2),'19','1')) AS "1900년대",
+        COUNT(DECODE(SUBSTR(TO_CHAR(EXTRACT(YEAR FROM HIRE_DATE)),1,2),'20','1')) AS "2000년대"
+FROM EMPLOYEE;
+
+-- ROLLUP과 CUBE활용하기--
+-- GROUP BY에 작성한 기준컬럼이 한개일 경우 -> ROLLUP,CUBE차이 없음
+-- 컬럼기준 그룹함수결과, 총 그룹함수의 결과를 출력
+
+-- GROUP BY 작성한 기준컬럼이 두개일경우 
+-- ROLLUP : 두개컬럼에 대한 그룹함수 결과, 첫번째 매개변수있는 컬럼의 그룹함수결과, 총 그룹함수의 결과 출력
+-- CUBE : 두개 컬럼에 대한 그룹함수 결과, 첫번째 매개변수에 있는 컬럼의 그룹함수결과, 두번째 매개변수에 있는 컬럼의 그룹함수결과, 총 그룹함수의 결과출력
+
+-- GROUP BY 절 이용해서 조회하기
+SELECT DEPT_CODE,COUNT(*)
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NOT NULL
+GROUP BY DEPT_CODE;
+
+SELECT COUNT(*)
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NOT NULL;
+
+-- ROLLUP
+-- 위의 두개를 안쓰고 한번에 처리가능하다
+SELECT DEPT_CODE,COUNT(*)
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NOT NULL
+GROUP BY ROLLUP(DEPT_CODE);
+
+-- CUBE
+SELECT DEPT_CODE,COUNT(*)
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NOT NULL
+GROUP BY CUBE(DEPT_CODE);
+
+-- 두개 컬럼을 기준으로 설정했을 때 ROLLUP
+SELECT DEPT_CODE,COUNT(*)
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NOT NULL
+GROUP BY ROLLUP(DEPT_CODE,JOB_CODE); 
+
+-- 두개 컬럼을 기준으로 설정했을 때 CUBE -> 두개의 컬럼에 대한 집계결과를 출력
+-- GROUP BY 없는 것
+-- GROUP BY DEPT_CODE
+-- GROUP BY JOB_CODE
+-- GROUP BY DEPT_CODE,JOB_CODE
+SELECT DEPT_CODE,JOB_CODE,COUNT(*),SUM(SALARY),AVG(SALARY)
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NOT NULL
+GROUP BY CUBE(DEPT_CODE,JOB_CODE);
+
+-- 데이터 정렬하기
+-- 조회하는 데이터를 정렬해서 가져오기
+-- 컬럼값을 기준으로 오름차순, 내림차순으로 정렬
+-- ORDER BY 컬럼명 정렬방식[ASC(DEFAULT)/DESC][컬럼명 정렬방식...] //안적으면 DEFAULT값 (생략이 가능하다)
+
+-- SELECT 컬럼명
+-- FROM 테이블명
+-- [WHERE]
+-- [GROUPO BY]
+-- [HAVING]
+-- [ORDER BY]
+-- 사원명을 기준으로 내림차순 정렬해서 조회하기
+-- 사원명, 급여, 보너스, 부서코드
+SELECT EMP_NAME,SALARY,BONUS,DEPT_CODE
+FROM EMPLOYEE
+ORDER BY EMP_NAME ASC;
+-- 급여를 많은순으로 사원정보 조회하기
+SELECT *
+FROM EMPLOYEE
+ORDER BY SALARY DESC;
+
+-- ORDER BY 구문에 여러컬럼 지정하기
+-- 기준컬럼값이 동등할 때 다음 기준으로 정렬을 함
+SELECT EMP_NAME,DEPT_CODE,JOB_CODE,SALARY
+FROM EMPLOYEE
+ORDER BY DEPT_CODE,JOB_CODE,SALARY DESC;
+
+-- 정렬시 NULL값처리
+SELECT EMP_NAME,BONUS
+FROM EMPLOYEE
+ORDER BY BONUS ASC; --NULL값을 하단에 배치
+ORDER BY BONUS DESC; --NULL값을 상단에 배치
+ORDER BY BONUS ASC NULLS LAST;-->NULL값 반대로 상단에 배치
+ORDER BY BONUS DESC NULLS LAST;--> NULL값 반대로 하단에 배치
+
+-- ORDER BY 절에는 컬럼명이 아닌 인덱스 번호를 사용할 수 있다.
+SELECT*FROM EMPLOYEE
+ORDER BY 2;
+-- 가상컬럼을 생성했을 때 사용할 수 있다.
+SELECT EMP_NAME,SALARY*12
+FROM EMPLOYEE
+ORDER BY 2 DESC;
+-- ORDER BY 에서 컬럼별칭 사용 가능할까 ? -> 가능하다
+SELECT EMP_NAME,SALARY*12 AS TOTAL_SAL
+FROM EMPLOYEE
+-- WHERE TOTAL_SAL>=1000000; --오류
+ORDER BY TOTAL_SAL DESC;
+
+--GROUPING
+
+SELECT 
+    CASE 
+        WHEN GROUPING(DEPT_CODE)=0 AND GROUPING(JOB_CODE)=1 THEN'부서별 인원수'
+        WHEN GROUPING(DEPT_CODE)=1 AND GROUPING(JOB_CODE)=0 THEN'직책별 인원수'
+        WHEN GROUPING(DEPT_CODE)=1 AND GROUPING(JOB_CODE)=1 THEN'총 인원수'
+        ELSE'직책부서별 인원수'
+    END AS 구분,
+    COUNT(*),DEPT_CODE,JOB_CODE
+FROM EMPLOYEE
+GROUP BY CUBE(DEPT_CODE,JOB_CODE)
+ORDER BY 1;
+
+-- 집합 연산자 ----
+-- 여러개의 SELECT문을 한개의 결과(RESULT SET)으로 출력해주는 연산자
+-- 첫번째 SELECT문의 컬럼수와 이후 작성되는 SELECT문의 컬럼수가 같아야하고, 
+-- 컬럼의 타입도 동일해야한다
+
+-- UNION으로 연결하기
+-- SELECT문
+-- UNION
+-- SELECT문
+-- [UNION
+-- SELECT문
+-- ] 
+
+SELECT EMP_ID,EMP_NAME,DEPT_CODE,SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE='D5'
+UNION
+SELECT EMP_ID,EMP_NAME,DEPT_CODE,SALARY
+FROM EMPLOYEE
+WHERE SALARY>=3000000;
+
+SELECT DEPT_CODE,JOB_CODE,AVG(SALARY)
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NOT NULL
+GROUP BY DEPT_CODE,JOB_CODE
+UNION
+SELECT DEPT_CODE,NULL,FLOOR(AVG(SALARY))
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NOT NULL
+GROUP BY DEPT_CODE;
+UNION
+SELECT NULL,NULL,FLOOR(AVG(SALARY))
+FROM EMPLOYEE
+WHERE DEPT_CODE IS NOT NULL; --???
+
+-- UNIONALL
+-- 증복값도 출력
+SELECT EMP_ID,EMP_NAME,DEPT_CODE,SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE='D5'
+UNION ALL
+SELECT EMP_ID,EMP_NAME,DEPT_CODE,SALARY
+FROM EMPLOYEE
+WHERE SALARY>=3000000;
+
+-- 부서코드, 부서명과 직책코드와 직책명을 다 조회하기 -- 테이블이 다르기때문에 연관관계가 없음
+SELECT *FROM DEPARTMENT;
+SELECT *FROM JOB;
+
+SELECT DEPT_ID,DEPT_TITLE
+FROM DEPARTMENT
+UNION
+SELECT JOB_CODE,JOB_NAME
+FROM JOB;
+--컬럼의 타입도 같아야한다.
+DESC JOB; --> 타입 : 문자열
+DESC DEPARTMENT; --> 타입 : 문자열
+SELECT DEPT_ID,DEPT_TITLE
+FROM DEPARTMENT
+UNION
+SELECT JOB_CODE,JOB_NAME
+FROM JOB;
+
+
+-- INTERSECT
+SELECT EMP_ID,EMP_NAME,DEPT_CODE,SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE='D5'
+INTERSECT
+SELECT EMP_ID,EMP_NAME,DEPT_CODE,SALARY
+FROM EMPLOYEE
+WHERE SALARY>=3000000; 
+
+-- MINUS
+SELECT EMP_ID,EMP_NAME,DEPT_CODE,SALARY
+FROM EMPLOYEE
+WHERE DEPT_CODE='D5'
+MINUS
+SELECT EMP_ID,EMP_NAME,DEPT_CODE,SALARY
+FROM EMPLOYEE
+WHERE SALARY>=3000000; 
+
+SELECT EMP_ID,EMP_NAME
+FROM EMPLOYEE
+UNION
+SELECT DEPT_ID,DEPT_TITLE
+FROM DEPARTMENT
+UNION
+SELECT JOB_CODE,JOB_NAME
+FROM JOB
+MINUS
+SELECT DEPT_ID,DEPT_TITLE
+FROM DEPARTMENT
+WHERE DEPT_ID IN('D5','D6','D7');
+INTERSECT 
+SELECT EMP_ID,EMP_NAME
+FROM EMPLOYEE
+WHERE EMP_NAME LIKE'%유%';
+
+-- JOIN 에 대해 알아보자-----
+-- 두개 이상의 테이블을 특정컬럼을 기준으로 연결하는 기능
+-- JOIN 두가지 종류
+-- INNER JOIN : 기준컬럼값과 일치하는 값이 있는 ROW만 연결하는 JOIN문 * 없는 ROW 제외
+-- OUTER JOIN : 기준 컬럼값과 일치하는 값이 없는 ROW도 가져오게 하는 JOIN문 * 전체 ROW를 가져올 테이블 설정/ 일치하는 값이 없는 ROW NULL값으로 연결
+
+-- JOIN문 작성하기
+-- 오라클 조인, ANSI조인이 있음
+-- 오라클 조인 : SELECT 컬럼명, 컬럼명, ... FROM 테이블, 테이블 B WHERE 테이블,컬럼명=테이블B 컬럼명
+-- ANSI : SELECT 컬럼명, 컬럼명 .... FROM 테이블 JOIN 테이블 B ON 테이블.컬럼명=테이블 B.컬럼명
+-- *JOIN 기준의 컬럼은 유일한값을 가지고 있어야한다. -> PK설정된 컬럼값 이용
+
+-- 사원정보, 사원의 부서정보 전체 출력하기
+-- 오라클 조인으로 EMPLOYEE,DEPARTMENT 조인하기
+SELECT*FROM EMPLOYEE,DEPARTMENT WHERE DEPT_CODE=DEPT_ID;
+-- INNER조인
+SELECT EMP_NAME,SALARY,DEPT_TITLE FROM EMPLOYEE,DEPARTMENT WHERE DEPT_CODE=DEPT_ID;
+-- ANSI조인
+-- INNER JOIN
+SELECT *FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID;
+SELECT EMP_NAME,SALARY,DEPT_TITLE,LOCATION_ID
+FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID; -- OUTER JOIN 은 JOIN앞에 LEFT를 써준다.
+
+
