@@ -1072,4 +1072,324 @@ SELECT *FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID;
 SELECT EMP_NAME,SALARY,DEPT_TITLE,LOCATION_ID
 FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID; -- OUTER JOIN 은 JOIN앞에 LEFT를 써준다.
 
+-- 사원에 대한 사원명, 이메일, 전화번호, 부서명을 조회하기
+SELECT EMP_NAME,EMAIL,PHONE,DEPT_TITLE
+FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_ID=DEPT_CODE;
+
+-- 사원 중 회계관리부에 근무하는 사원의 부서명, 사원명, 급여 보너스 조회하기
+SELECT DEPT_TITLE, EMP_NAME,SALARY,BONUS
+FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_ID =DEPT_CODE
+WHERE DEPT_TITLE='회계관리부';
+
+-- 사원 중 대리 직책을 가지고 있는 사원의 직책명, 사원명, 급여, 보너스 조회하기
+SELECT *FROM JOB;
+SELECT *FROM EMPLOYEE;
+-- 컬렴명이 동일하다면 앞에 테이블명. 을 찍어서 구분해야하거나 별칭을 부여하여 구분해야함
+SELECT JOB_NAME, EMP_NAME,SALARY,BONUS
+-- FROM EMPLOYEE JOIN JOB ON EMPLOYEE.JOB_CODE=JOB.JOB_CODE;
+FROM EMPLOYEE E JOIN JOB J ON E.JOB_CODE=J.JOB_CODE;
+-- SELECT에도 동일한 컬럼명일 때 사용해서 구분해줘야함
+SELECT E.JOB_CODE,JOB_NAME,EMP_NAME,SALARY,BONUS
+FROM EMPLOYEE E JOIN JOB J ON E.JOB_CODE=J.JOB_CODE;
+
+-- USING : JOIN할 때 연결할 컬럼 명칭이 동일하면 USING 예약어를 사용할 수 있음
+-- USING으로 묶었을 때 JOB_CODE는 하나만 출력됨
+-- USING을 사용할 때 SELECT에는 식별자를 쓰지 못한다. ( 따로 부여할 필요 없음 ) 
+SELECT**
+FROM EMPLOYEE E JOIN JOB J USING(JOB_CODE);
+
+-- ASIA 가 근무지역인 부서의 부서명 조회하기
+SELECT *FROM LOCATION;
+SELECT *FROM DEPARTMENT;
+SELECT DEPT_TITLE
+FROM DEPARTMENT JOIN LOCATION ON LOCATION_ID=LOCAL_CODE
+WHERE LOCAL_NAME LIKE 'ASIA%';
+
+-- JOIN문에서 GROUP BY 이용하기
+-- 부서명별 사원수, 평균급여를 조회하기, 평균급여가 3000000이상
+SELECT DEPT_TITLE,COUNT(*) AS EMP_COUNT,AVG(SALARY) AS AVG_SAL
+FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID 
+GROUP BY DEPT_TITLE
+HAVING AVG(SALARY)>=3000000
+ORDER BY 3;
+
+-- OUTER JOIN ----
+-- JOIN 표현법
+-- JOIN 테이블명 LEFT/LIGHT JOIN 테이블명 ON 조건
+SELECT *
+FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID; --DEPT_CODE가 NULL인사람들은 빼고 나옴 얘네도 출력하고 싶을때 OUTER을 사용함
+-- OUTER사용해서 다 넣어보기
+-- LEFT
+SELECT *
+FROM EMPLOYEE LEFT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID; -- TRUE가 나오는 애들은 ROW로 연결하고 연결이 안돼서 FALSE가 나오는 애들은 NULL로 출력
+-- RIGHT
+SELECT *
+FROM EMPLOYEE RIGHT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID; 
+
+-- > 참조되는 컬럼값이 필수일때는 INNER JOIN으로 데이터를 가져오고
+-- 참조되는 컬럼값이 선택일 때는 OUTER JOIN으로 데이터를 가져온다. 
+
+-- 사원이 없는 부서 조회하기
+-- 부서명
+SELECT DEPT_TITLE
+FROM DEPARTMENT LEFT JOIN EMPLOYEE ON DEPT_CODE=DEPT_ID
+WHERE DEPT_CODE IS NULL;
+
+-- CROSS JOIN : 전체 ROW를 연결하는 JOIN 구문
+SELECT *
+FROM EMPLOYEE CROSS JOIN DEPARTMENT
+ORDER BY 2;
+
+SELECT *
+FROM EMPLOYEE CROSS JOIN LOCATION;
+
+-- SELF JOIN : 테이블 한개를 이용해서 JOIN을 하는 것
+-- 자기 자신을 참조하는 컬럼이 있어야 한다. 
+SELECT*FROM EMPLOYEE;--EMP_ID와 MANAGER_ID가 같음
+
+-- 사원의 매니저 정보를 조회하기
+-- 사원번호, 사원명, 매니저 사원 번호, 매니저 사원명
+SELECT E.EMP_ID,E.EMP_NAME,E.MANAGER_ID,M.EMP_NAME
+FROM EMPLOYEE E JOIN EMPLOYEE M ON E.MANAGER_ID=M.EMP_ID;
+
+-- 비동등조인
+SELECT*FROM SAL_GRADE;
+
+SELECT EMP_ID,SAL_GRADE.SAL_LEVEL
+FROM EMPLOYEE JOIN SAL_GRADE ON SALARY BETWEEN MIN_SAL AND MAX_SAL;
+
+-- 다중 조인 : 두개 이상의 테이블을 조인함
+-- 사원의 사원명, 부서명, 직책명, 급여, 보너스 조회하기
+-- 표현법 FROM 테이블 JOIN 테이블 ON 조건 JOIN 테이블 ON 조건
+SELECT EMP_NAME,DEPT_TITLE,JOB_NAME,SALARY,BONUS
+FROM EMPLOYEE 
+        LEFT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID
+        JOIN JOB USING(JOB_CODE);
+-- 사원명, 부서명,직책명, 지역명, 지역코드, 국가 코드를 조회하기
+SELECT EMP_NAME,DEPT_TITLE,JOB_NAME,LOCAL_NAME,LOCAL_CODE,NATIONAL_CODE
+FROM EMPLOYEE
+    LEFT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID
+         JOIN JOB USING(JOB_CODE)
+    LEFT JOIN LOCATION ON  LOCATION_ID=LOCAL_CODE
+    LEFT JOIN NATIONAL USING(NATIONAL_CODE);
+-- 문제풀이
+-- 주민번호가 1970년대 생이면서 성별이 여자이고, 성이 전씨인 직원들의 사원명, 주민번호, 부서명, 직급명을 조회하시오.
+SELECT*FROM TAB;
+SELECT EMP_NAME,EMP_NO,DEPT_TITLE,JOB_NAME
+FROM EMPLOYEE
+        LEFT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID
+             JOIN JOB USING(JOB_CODE)
+WHERE SUBSTR(EMP_NO,1,1)=7 AND SUBSTR(EMP_NO,8,1)=2 AND EMP_NAME LIKE '전%';
+
+-- 이름에 '형'자가 들어가는 직원들의 사번, 사원명, 부서명을 조회하시오.
+SELECT EMP_ID,EMP_NAME,DEPT_CODE
+FROM EMPLOYEE LEFT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID
+WHERE EMP_NAME LIKE '%형%';
+
+-- 해외영업부에 근무하는 사원명, 직급명, 부서코드, 부서명을 조회하시오.
+SELECT EMP_NAME,JOB_NAME,DEPT_CODE,DEPT_TITLE
+FROM EMPLOYEE 
+        JOIN JOB USING(JOB_CODE)
+   LEFT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID
+WHERE DEPT_TITLE LIKE'해외%';
+        
+-- 보너스포인트를 받는 직원들의 사원명, 보너스포인트, 부서명, 근무지역명을 조회하시오.
+SELECT EMP_NAME,BONUS,DEPT_TITLE,LOCAL_NAME
+FROM EMPLOYEE 
+    LEFT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID
+    LEFT JOIN LOCATION ON LOCAL_CODE=LOCATION_ID
+WHERE BONUS IS NOT NULL;
+
+-- 부서코드가 D2인 직원들의 사원명, 직급명, 부서명, 근무지역명을 조회하시오.
+SELECT EMP_NAME,JOB_NAME,DEPT_TITLE,LOCAL_NAME
+FROM EMPLOYEE
+        JOIN JOB USING(JOB_CODE)
+   LEFT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID
+   LEFT JOIN LOCATION ON LOCAL_CODE=LOCATION_ID
+WHERE DEPT_CODE='D2';
+
+-- 급여등급테이블의 최대급여(MAX_SAL)보다 많이 받는(실수령액) - 보너스를 포함한 월급 직원들의 사원명, 직급명, 급여, 연봉을 조회하시오.
+-- SALARY + SALARY * NVL(BONUS, 0)
+-- (사원테이블과 급여등급테이블을 SAL_LEVEL컬럼기준으로 조인할 것) ?????????????????????
+SELECT EMP_NAME,JOB_NAME,SALARY,(SALARY+(SALARY*NVL(BONUS,0)))*12 AS 연봉
+FROM EMPLOYEE
+         JOIN JOB USING(JOB_CODE) 
+    LEFT JOIN SAL_GRADE USING(SAL_LEVEL)
+WHERE MAX_SAL<SALARY+SALARY*NVL(BONUS,0);
+
+-- 한국(KO)과 일본(JP)에 근무하는 직원들의 사원명, 부서명, 지역명, 국가명을 조회하시오.
+SELECT EMP_NAME,DEPT_TITLE,LOCAL_NAME,NATIONAL_NAME
+FROM EMPLOYEE
+    LEFT JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID
+    LEFT JOIN LOCATION ON LOCAL_CODE=LOCATION_ID
+    LEFT JOIN NATIONAL USING(NATIONAL_CODE)
+WHERE NATIONAL_NAME IN('한국','일본');
+
+-- 같은 부서에 근무하는 직원들의 사원명, 부서명, 동료이름을 조회하시오. (self join 사용) ????????????????
+SELECT E.EMP_NAME,DEPT_TITLE,D.EMP_NAME
+FROM EMPLOYEE E JOIN EMPLOYEE D ON E.DEPT_CODE=D.DEPT_CODE
+        LEFT JOIN DEPARTMENT ON E.DEPT_CODE=DEPT_ID
+WHERE E.EMP_NAME!=D.EMP_NAME
+ORDER BY 1;
+
+-- 보너스포인트가 없는 직원들 중에서 직급이 차장과 사원인 직원들의 사원명, 직급명, 급여를 조회하시오. 단, join과 IN 사용할 것
+SELECT EMP_NAME,JOB_NAME,SALARY
+FROM EMPLOYEE JOIN JOB USING(JOB_CODE)
+WHERE BONUS IS NULL AND JOB_NAME IN('차장','과장');
+
+-- 재직중인 직원과 퇴사한 직원의 수를 조회하시오.
+SELECT COUNT(ENT_DATE) AS 재직중인직원, COUNT(*)- COUNT(ENT_DATE) AS 퇴사한직원
+FROM EMPLOYEE;
+-- 다르게 푸는 방법
+SELECT DECODE(ENT_YN,'N','재직','퇴사') 재직여부,COUNT(*) 수
+FROM EMPLOYEE
+GROUP BY DECODE(ENT_YN,'N','재직','퇴사'); 
+
+-- 서브쿼리에 대해 알아보자
+-- SELECT문에 또다른 SELECT문을 작성하는 것
+-- 주 SELECT 문 보조 SELECT 문
+-- 서브쿼리문은 반드시 괄호로 묶어줘야하한다
+-- 서브쿼리는 SELECT문의 컬럼위치, FROM 절,WHERE 절 에 사용이 가능
+-- INSERT, UPDATE,CREATE문에도 사용
+
+-- SELECT 컬럼명,(SELECT 컬럼명 FROM 테이블) : 스칼라서브쿼리, 단일행서브쿼리
+-- FROM (SELECT 컬럼명.... FROM 테이블) : 다중행, 다중행다중열 서브쿼리
+-- WHERE 컬럼명 비교연산(SELECT 컬럼명 FROM 테이블명) : 단일행, 다중행, 다중열 서브쿼리
+
+-- 윤은해 사원과 동일한 급여를 받고 있는 사원 조회하기
+SELECT SALARY FROM EMPLOYEE WHERE EMP_NAME='윤은해';
+SELECT *
+FROM EMPLOYEE
+WHERE SALARY=(SELECT SALARY FROM EMPLOYEE WHERE EMP_NAME='윤은해');
+
+-- D5부서의 평균급여보다 급여를 많이 받는 사원 조회하기
+SELECT AVG(SALARY) FROM EMPLOYEE WHERE DEPT_CODE='D5';
+SELECT E.*,(SELECT AVG(SALARY) FROM EMPLOYEE WHERE DEPT_CODE='D5') AS AVG_SAL
+FROM EMPLOYEE E
+WHERE SALARY>=(SELECT AVG(SALARY) FROM EMPLOYEE WHERE DEPT_CODE='D5');
+
+-- 1. 단일행 서브쿼리
+-- 서브쿼리의 결과 (RESULTSET)가 1개열 1개행인 경우
+
+-- 전체사원의 평균급여보다 많은 급여를 받는 사원의 이름, 급여, 부서코드 조회하기
+SELECT EMP_NAME,SALARY,DEPT_CODE
+FROM EMPLOYEE E
+WHERE SALARY>=(SELECT AVG(SALARY) FROM EMPLOYEE);
+
+--부서가 총무부인 사원을 조회하기
+SELECT *
+FROM EMPLOYEE
+WHERE DEPT_CODE=(SELECT DEPT_ID FROM DEPARTMENT WHERE DEPT_TITLE='총무부');
+
+--직책이 과장인 사원을 조회하기
+SELECT *
+FROM EMPLOYEE
+WHERE JOB_CODE=(SELECT JOB_CODE FROM JOB WHERE JOB_NAME='과장');
+
+-- 다중행 서브쿼리
+-- 서브쿼리의 결과가 1개컬럼 다수 행을 갖는 것
+-- 직책이 과장, 부장인 사원 조회하기
+SELECT JOB_CODE FROM JOB WHERE JOB_NAME IN('과장','부장'); -- 2개의 행이 나옴 (다중행)
+SELECT *
+FROM EMPLOYEE
+WHERE JOB_CODE IN(SELECT JOB_CODE FROM JOB WHERE JOB_NAME IN('과장','부장')); -- JOB_CODE가 1개이기때문에 () 와 비교할 수 없다-> IN을 사용
+-- 다중행 서브쿼리 대소비교하기
+-- ANY OR,ALL()AND 이용
+-- ANY
+-- 컬럼>(=)ANY() : 다중행 서브쿼리의 결과 중 하나라도 크면 참 -> 다중행 서브쿼리 결과 중 최소값보다 크면 참
+-- 컬럼<(=)ANY() : 다중행 서브쿼리의 결과 중 하나라도 작은면 참 -> 다중행 서브쿼리 결과 중 최대값보다 작으면 참
+-- D5,D6사원의 급여보다 많이 받는 사원 
+SELECT *
+FROM EMPLOYEE
+WHERE SALARY> ANY(SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE IN('D5','D6'));  -- > 180만원 이상 받는 사원들만 출력됨
+            <                                                                  --> 최대값보다 작게 받는 값들이 출력됨
+-- 컬럼>(=)ALL() : 다중행 서브쿼리의 결과 중 모든값보다 크면 참->다중행 서브쿼리 결과 중 최대값보다 크면 참
+-- 컬럼<(=)ALL() : 다중행 서브쿼리의 결과 중 모든값보다 크면 참->다중행 서브쿼리 결과 중 최소값보다 크면 참
+
+SELECT *
+FROM EMPLOYEE
+WHERE SALARY> ALL(SELECT SALARY FROM EMPLOYEE WHERE DEPT_CODE IN('D5','D6')); -- 390만원 이상 받는 사원들이 출력됨
+            <                                                                 -- 180만원 보다 적게 받는 사원들이 출력됨
+
+-- 다중열 서브쿼리
+-- 서브쿼리의 결과가 1개행, 다수 컬럼을 갖는 것
+-- 퇴직한 여사원의 같은 부서, 같은 직급에 해당하는 사원 조회하기
+SELECT DEPT_CODE,JOB_CODE FROM EMPLOYEE WHERE ENT_YN='Y';
+SELECT DEPT_CODE,JOB_CODE,EMP_NAME
+FROM EMPLOYEE
+--WHERE DEPT_CODE=(SELECT DEPT_CODE FROM EMPLOYEE WHERE ENT_YN='Y')
+ --       AND JOB_CODE=(SELECT JOB_CODE FROM EMPLOYEE WHERE ENT_YN='Y');
+WHERE (DEPT_CODE,JOB_CODE)=(SELECT DEPT_CODE,JOB_CODE FROM EMPLOYEE WHERE ENT_YN='Y');
+
+-- 기술지원부 이면서 급여가 200만원인 사원이 있음
+-- 그 사원의 이름, 부서코드, 급여 출력하기(다중열 서브쿼리로 풀어보기)
+SELECT DEPT_CODE,SALARY FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID 
+WHERE SALARY=2000000 AND DEPT_TITLE='기술지원부';
+SELECT EMP_NAME,DEPT_CODE,SALARY
+FROM EMPLOYEE
+WHERE (DEPT_CODE,SALARY)
+        =(SELECT DEPT_CODE,SALARY FROM EMPLOYEE WHERE DEPT_CODE=(SELECT DEPT_ID FROM DEPARTMENT WHERE DEPT_TITLE='기술지원부') 
+        AND SALARY=2000000);
+
+-- 다중열 다중행 서브쿼리
+-- 서브쿼리의 결과가 다수행, 다수 컬럼을 갖는 것
+SELECT*FROM EMPLOYEE;
+-- FROM 절에 많이 사용함 -> INLINE VIEW 가상의 테이블을 만들어놓고 사용할 때를 말함
+SELECT * 
+FROM(SELECT * FROM EMPLOYEE JOIN DEPARTMENT ON DEPT_CODE=DEPT_ID JOIN JOB USING(JOB_CODE)); 
+
+-- 상관서브쿼리---
+-- 서브쿼리의 SELECT문을 작성할 때 메인쿼리의 값을 가져와 사용하는 구문
+-- 본인이 속한 부서의 사원수 출력, 본인이 속한 부서의 급여 평균보다 급여를 많이 받는 사원조회하기 --> 본인이라는 값이 바뀌면서 해당하는 값도 바뀌면서 출력/집계됨
+-- 상품에 달려있는 댓글갯수, 게시글에 달려있는 첨부파일 갯수
+
+-- 본인이 속한 부서의 사원수를 구하기
+SELECT COUNT(*) FROM EMPLOYEE GROUP BY DEPT_CODE; --> 본인이 속한 부서의 사원 수가 아님 그냥 부서별로 사원수를 구한것
+
+SELECT EMP_NAME,DEPT_CODE,(SELECT COUNT(*)FROM EMPLOYEE WHERE DEPT_CODE=E.DEPT_CODE) AS 사원수
+FROM EMPLOYEE E;
+
+-- 본인이 속한 부서의 사원수가 3명이상인 사원만 조회하기
+SELECT *
+FROM EMPLOYEE E
+WHERE (SELECT COUNT(*)FROM EMPLOYEE WHERE DEPT_CODE=E.DEPT_CODE)>=3;
+
+
+-- 매니저인 사원을 조회하기
+-- EXISTS예약어를 이용해서 ROW를 필터할 수 있음
+-- 서브쿼리의 결과가 1개 이상이면 TRUE, 0개면 FALSE반환하는 연산
+SELECT *
+FROM EMPLOYEE E
+WHERE EXISTS(SELECT 1 FROM EMPLOYEE WHERE MANAGER_ID=E.EMP_ID);
+
+-- 최고급여를 받는 사원 조회하기
+SELECT *
+FROM EMPLOYEE E
+WHERE NOT EXISTS(SELECT * FROM EMPLOYEE WHERE SALARY>E.SALARY);
+
+-- 자신이 속한 직급의 평균급여보다 많은 급여를 받는 사원의 이름, 직책명, 급여 조회하기
+SELECT EMP_NAME,SALARY,JOB_NAME 
+FROM EMPLOYEE E JOIN JOB J ON E.JOB_CODE=J.JOB_CODE
+WHERE SALARY> (SELECT AVG(SALARY) FROM EMPLOYEE WHERE JOB_CODE=E.JOB_CODE);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
